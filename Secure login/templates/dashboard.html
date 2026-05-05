@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="dashboard-header mt-4">
+    <div>
+        <h2><i class="fa-solid fa-server"></i> Command Center</h2>
+        <p class="text-muted mb-0">Welcome, Agent {{ current_user.username }} | <span class="badge badge-role">{{ current_user.role }}</span></p>
+    </div>
+    <div>
+        {% if not current_user.two_factor_secret %}
+            <a href="{{ url_for('setup_2fa') }}" class="btn btn-warning btn-sm" style="font-weight: 600;"><i class="fa-solid fa-shield-virus"></i> Enable 2FA</a>
+        {% else %}
+            <span class="badge bg-success" style="padding: 0.5rem; font-size: 0.9rem;"><i class="fa-solid fa-shield-check"></i> 2FA Active</span>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="threat-monitor text-center">
+            <h4><i class="fa-solid fa-satellite-dish"></i> Threat Level</h4>
+            <div style="font-size: 4rem; color: var(--success-color); margin: 1rem 0;">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <h5 class="text-success">SECURE</h5>
+            <p class="text-muted small">No active threats detected.</p>
+        </div>
+        
+        <div class="threat-monitor">
+            <h4><i class="fa-solid fa-microchip"></i> System Info</h4>
+            <hr style="border-color: var(--border-color);">
+            <ul class="list-unstyled">
+                <li class="mb-2"><span class="status-indicator"></span> <strong>Connection:</strong> Encrypted</li>
+                <li class="mb-2"><i class="fa-solid fa-clock text-muted"></i> <strong>Last Login:</strong> {{ current_user.last_login.strftime('%Y-%m-%d %H:%M:%S') if current_user.last_login else 'N/A' }}</li>
+                <li class="mb-2"><i class="fa-solid fa-network-wired text-muted"></i> <strong>IP Address:</strong> {{ current_user.last_login_ip or 'Unknown' }}</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="threat-monitor">
+            <h4><i class="fa-solid fa-list-check"></i> Your Activity Log</h4>
+            <div class="table-responsive">
+                <table class="log-table mt-3">
+                    <thead>
+                        <tr>
+                            <th>Action</th>
+                            <th>Time</th>
+                            <th>IP Address</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr>
+                            <td>{{ log.action }}</td>
+                            <td><span class="terminal-text">{{ log.timestamp.strftime('%H:%M:%S %d-%m-%Y') }}</span></td>
+                            <td>{{ log.ip_address }}</td>
+                            <td class="{% if log.status == 'Success' %}log-success{% else %}log-failed{% endif %}">
+                                {{ log.status }}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">No logs found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% if current_user.role == 'Admin' and all_logs %}
+        <div class="threat-monitor mt-4" style="border-color: var(--danger-color); box-shadow: 0 0 15px rgba(255, 68, 68, 0.1);">
+            <h4 class="text-danger"><i class="fa-solid fa-user-shield"></i> Global Security Audit (Admin Only)</h4>
+            <div class="table-responsive">
+                <table class="log-table mt-3">
+                    <thead>
+                        <tr>
+                            <th>User ID</th>
+                            <th>Action</th>
+                            <th>Time</th>
+                            <th>IP Address</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in all_logs %}
+                        <tr>
+                            <td>{{ log.user_id or 'Unknown' }}</td>
+                            <td>{{ log.action }}</td>
+                            <td><span class="terminal-text">{{ log.timestamp.strftime('%H:%M:%S') }}</span></td>
+                            <td>{{ log.ip_address }}</td>
+                            <td class="{% if log.status == 'Success' %}log-success{% else %}log-failed{% endif %}">
+                                {{ log.status }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
